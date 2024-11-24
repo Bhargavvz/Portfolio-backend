@@ -4,7 +4,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import messageRoutes from './routes/messages.js';
 import projectRoutes from './routes/projects.js';
-import adminRoutes from './routes/admin.js';
 
 dotenv.config();
 
@@ -23,7 +22,6 @@ app.use(cors({
 // Routes
 app.use('/api/messages', messageRoutes);
 app.use('/api/projects', projectRoutes);
-app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

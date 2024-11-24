@@ -11,18 +11,28 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(express.json({ limit: '30mb', extended: true }));
-app.use(express.urlencoded({ limit: '30mb', extended: true }));
-app.use(cors());
+app.use(express.json());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://portfolio-rho-five-45.vercel.app/']  // Update this with your frontend URL
+    : ['http://localhost:5173'],
+  credentials: true
+}));
 
 // Routes
-app.use('/api/projects', projectRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/projects', projectRoutes);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
-  })
-  .catch((error) => console.log(error.message));
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

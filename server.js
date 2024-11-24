@@ -1,14 +1,9 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import projectRoutes from './routes/projects.js';
-import messageRoutes from './routes/messages.js';
-
-dotenv.config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
@@ -21,19 +16,51 @@ app.use(cors({
 }));
 
 // Routes
-app.use('/api/messages', messageRoutes);
-app.use('/api/projects', projectRoutes);
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/projects', require('./routes/projects'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK' });
+  res.status(200).json({ 
+    status: 'OK',
+    mongodb: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+  });
 });
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// MongoDB Connection Options
+const mongoOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+};
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI, mongoOptions)
+  .then(() => {
+    console.log('Connected to MongoDB');
+    // Start server only after successful database connection
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1); // Exit if we can't connect to the database
+  });
+
+// Handle MongoDB connection errors
+mongoose.connection.on('error', err => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+process.on('SIGINT', async () => {
+  await mongoose.connection.close();
+  process.exit(0);
 });

@@ -1,7 +1,12 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import messageRoutes from './routes/messages.js';
+import projectRoutes from './routes/projects.js';
+import adminRoutes from './routes/admin.js';
+
+dotenv.config();
 
 const app = express();
 
@@ -16,9 +21,9 @@ app.use(cors({
 }));
 
 // Routes
-app.use('/api/messages', require('./routes/messages'));
-app.use('/api/projects', require('./routes/projects'));
-app.use('/api/admin', require('./routes/admin'));
+app.use('/api/messages', messageRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
